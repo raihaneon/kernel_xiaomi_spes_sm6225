@@ -42,18 +42,6 @@ typedef enum {
 	ADC_MAX_NUM,
 }ADC_CH;
 
-static float sc8551_adc_lsb[] = {
-	[ADC_IBUS]	= SC8551_IBUS_ADC_LSB,
-	[ADC_VBUS]	= SC8551_VBUS_ADC_LSB,
-	[ADC_VAC]	= SC8551_VAC_ADC_LSB,
-	[ADC_VOUT]	= SC8551_VOUT_ADC_LSB,
-	[ADC_VBAT]	= SC8551_VBAT_ADC_LSB,
-	[ADC_IBAT]	= SC8551_IBAT_ADC_LSB,
-	[ADC_TBUS]	= SC8551_TSBUS_ADC_LSB,
-	[ADC_TBAT]	= SC8551_TSBAT_ADC_LSB,
-	[ADC_TDIE]	= SC8551_TDIE_ADC_LSB,
-};
-
 #define SC8551_ROLE_STDALONE   	0
 #define SC8551_ROLE_SLAVE		1
 #define SC8551_ROLE_MASTER		2
@@ -993,9 +981,18 @@ static int sc8551_get_adc_data(struct sc8551 *sc, int channel,  int *result)
 
 	if (sc->chip_vendor == SC8551) {
 		kernel_neon_begin();
-		*result = (int)(val * sc8551_adc_lsb[channel]);
+		if (channel == ADC_IBUS) {		val = val * 15625/10000;}
+		else if (channel == ADC_VBUS)		val = val * 375/100;
+		else if (channel == ADC_VAC)		val = val * 5;
+		else if (channel == ADC_VOUT)		val = val * 125 / 100;
+		else if (channel == ADC_VBAT)		val = val * 12575/10000;
+		else if (channel == ADC_IBAT)		val = val * 3125/1000 ;
+		else if (channel == ADC_TBUS)		val = val * 9766/100000;
+		else if (channel == ADC_TBAT)		val = val * 9766/100000;
+		else if (channel == ADC_TDIE)		val = val * 5/10;
 		kernel_neon_end();
 	}
+	*result = val;
 	return 0;
 }
 EXPORT_SYMBOL_GPL(sc8551_get_adc_data);
